@@ -35,3 +35,73 @@ xyz' AND (SELECT CASE WHEN (Username = 'Administrator' AND SUBSTRING(Password, 1
 
 **Eslatma:**
 Shartli xatolarni qo‘zg‘atishning turli usullari mavjud va turli texnikalar turli xil ma’lumotlar bazalarida eng samarali ishlaydi. Batafsilroq ma’lumot uchun **SQL injeksiya cheat sheet** ga qarang.
+
+
+
+### Nima sodir bo‘lmoqda?
+
+Siz **`id` parametri**ga oddiy `'` yuborgansiz → ilova SQL so‘rovida xato chiqdi.
+Server esa xatoni foydalanuvchiga **to‘liq tafsilotlari bilan** qaytarmoqda:
+
+```
+Unterminated string literal started at position 52 in SQL
+SELECT * FROM tracking WHERE id = '''. Expected char
+```
+
+👉 Bu xabarda biz quyidagilarni ko‘rib turibmiz:
+
+* To‘liq **SQL query** qanday tuzilgan:
+  `SELECT * FROM tracking WHERE id = '...'`
+* **Qayerda injection nuqtasi** joylashganini (`id` qiymati `''` ichida).
+* Xatolik turi → `Unterminated string literal` (ya’ni yopilmagan `'`).
+
+---
+
+### Bu nimani anglatadi?
+
+Bu kabi verbose errorlar orqali hujumchi:
+
+1. **Query tuzilishini** ko‘rishi mumkin (qaysi jadval, qaysi ustunlar ishlatilayotgani).
+2. **Injection nuqtasining aniq joyini** bilib oladi (`WHERE id = '...'`).
+3. Shundan keyin **payloadni to‘g‘ri shakllantirish** osonlashadi.
+
+Masalan:
+Agar query shunday bo‘lsa:
+
+```sql
+SELECT * FROM tracking WHERE id = 'xyz'
+```
+
+Siz quyidagicha payload ishlatishingiz mumkin:
+
+```http
+?id=xyz'--
+```
+
+👉 Bu joyda `--` **SQL comment** qo‘yib beradi va query quyidagiga aylanadi:
+
+```sql
+SELECT * FROM tracking WHERE id = 'xyz'--'
+```
+
+Natijada **ortiqcha `'` queryni buzmaydi**.
+
+---
+
+### Nega xavfli?
+
+Verbose xatolar orqali attacker quyidagilarni aniqlab oladi:
+
+* **DBMS turi** (masalan, Oracle, MySQL, PostgreSQL).
+* **Query strukturasini** (qaysi jadval/ustun ishlatilayotgani).
+* **Kutilmagan ustun/tablitsa nomlari** (masalan `tracking`, `users`).
+* So‘ngra targeted payloadlar orqali **data exfiltration**ni amalga oshiradi.
+
+---
+
+### Qarshi chora
+
+* Production rejimida **detailed error message** foydalanuvchiga chiqmasligi kerak.
+  (Instead → “Internal Server Error” kabi umumiy javob bo‘lishi lozim.)
+* Errorlarni **logging** faqat server tomonida.
+* **Parameterized queries / prepared statements** ishlatish (so‘rovga string qo‘shib yozish emas).
