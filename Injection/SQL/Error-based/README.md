@@ -105,3 +105,27 @@ Verbose xatolar orqali attacker quyidagilarni aniqlab oladi:
   (Instead → “Internal Server Error” kabi umumiy javob bo‘lishi lozim.)
 * Errorlarni **logging** faqat server tomonida.
 * **Parameterized queries / prepared statements** ishlatish (so‘rovga string qo‘shib yozish emas).
+
+
+Albatta, mana tarjimasi:
+
+---
+
+### Batafsil SQL xato xabarlari orqali maxfiy ma’lumotlarni chiqarib olish – Davomi
+
+Ba’zan siz ilovani shunday xato xabarini chiqarishga majbur qilishingiz mumkinki, unda **so‘rovdan qaytayotgan ma’lumotlarning o‘zi** ham ko‘rinib qoladi. Bu holda aslida “ko‘r” bo‘lgan SQL injeksiya zaifligi **ko‘rinadigan** (visible) zaiflikka aylanadi.
+
+Buni amalga oshirish uchun **CAST() funksiyasi**dan foydalanish mumkin. Bu funksiya bir ma’lumot turini boshqasiga o‘tkazishga imkon beradi. Masalan, quyidagi jumlani o‘z ichiga olgan so‘rovni tasavvur qiling:
+
+```sql
+CAST((SELECT example_column FROM example_table) AS int)
+```
+
+Odatda, siz o‘qishga harakat qilayotgan ma’lumotlar **matn** bo‘ladi. Uni mos kelmaydigan turga, masalan, **int** ga o‘tkazishga urinish, quyidagiga o‘xshash xato chiqarishi mumkin:
+
+```
+ERROR: invalid input syntax for type integer: "Example data"
+```
+
+Shu turdagi so‘rov, agar belgilar soni (character limit) sizni shartli javoblar (conditional responses) chiqarishdan to‘xtatib qo‘ysa, juda foydali bo‘lishi mumkin.
+
