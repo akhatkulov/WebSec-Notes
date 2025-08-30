@@ -43,3 +43,22 @@ statement.setString(1, input);
 ResultSet resultSet = statement.executeQuery();
 ```
 
+**SQL injeksiyani qanday oldini olish mumkin – Davomi**
+
+Parametrlashtirilgan so‘rovlar (parameterized queries) ni foydalanuvchi inputi **so‘rov ichida faqatgina ma’lumot sifatida qatnashadigan joylarda** ishlatish mumkin. Bunga **WHERE sharti**, **INSERT** yoki **UPDATE** so‘rovlaridagi qiymatlar kiradi.
+
+Lekin parametrlashtirilgan so‘rovlarni foydalanuvchi inputi **jadval nomi, ustun nomi yoki ORDER BY qismi**ga kiritilsa, bunday holatni to‘g‘ri ishlov bera olmaydi. Agar ilova funksionalligi foydalanuvchi kiritgan ma’lumotni shu qismlarga joylashtirishi kerak bo‘lsa, boshqa yondashuvlar qo‘llaniladi, masalan:
+
+* Faqat ruxsat etilgan qiymatlarni **whitelisting** orqali cheklash.
+* Kerakli funksionallikni ta’minlash uchun **boshqa mantiqiy usullar**dan foydalanish.
+
+---
+
+Parametrlashtirilgan so‘rov SQL injeksiyadan samarali himoya bo‘lishi uchun **so‘rov ichida ishlatiladigan satr doimiy (hard-coded constant)** bo‘lishi kerak.
+
+U hech qachon istalgan manbadan keladigan o‘zgaruvchi ma’lumotni o‘z ichiga olmasligi lozim.
+
+⚠️ **Xato yondashuv:** Har bir inputni alohida holatda tekshirib, “ishonchli” bo‘lganlarini concatenation orqali so‘rovga qo‘shish. Bu xavfli, chunki:
+
+* Foydalanuvchi ma’lumotining asl kelib chiqishini noto‘g‘ri baholash mumkin.
+* Koddagi boshqa o‘zgarishlar “ishonchli” ma’lumotni ham ifloslantirishi (taint) ehtimoli bor.
