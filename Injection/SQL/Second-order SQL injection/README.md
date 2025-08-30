@@ -19,3 +19,27 @@ Bu holat odatda quyidagicha yuz beradi:
 * Keyinchalik shu ma’lumot bazadan olinadi va **ishonchli deb hisoblanadi**, chunki u ilgari xavfsiz tarzda kiritilgan deb o‘ylashadi.
 * Shu paytda ma’lumot SQL so‘roviga xavfsiz bo‘lmagan tarzda qo‘shiladi va injeksiya sodir bo‘ladi.
 
+**SQL injeksiyani qanday oldini olish mumkin**
+
+SQL injeksiyaning aksariyat holatlarini **satrlarni qo‘shib yozish (string concatenation)** o‘rniga **parametrlashtirilgan so‘rovlar** (parameterized queries) dan foydalanish orqali oldini olish mumkin. Bu parametrlashtirilgan so‘rovlar yana **"prepared statements"** deb ham ataladi.
+
+---
+
+Quyidagi kod SQL injeksiyaga zaif, chunki foydalanuvchi kiritgan qiymat to‘g‘ridan-to‘g‘ri so‘rov satriga qo‘shilmoqda:
+
+```java
+String query = "SELECT * FROM products WHERE category = '"+ input + "'";
+Statement statement = connection.createStatement();
+ResultSet resultSet = statement.executeQuery(query);
+```
+
+---
+
+Ushbu kodni foydalanuvchi inputi so‘rov tuzilmasiga aralashmasligi uchun quyidagicha yozish mumkin:
+
+```java
+PreparedStatement statement = connection.prepareStatement("SELECT * FROM products WHERE category = ?");
+statement.setString(1, input);
+ResultSet resultSet = statement.executeQuery();
+```
+
