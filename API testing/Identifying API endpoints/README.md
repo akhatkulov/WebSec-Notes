@@ -49,6 +49,23 @@ Kontent turini o‘zgartirish uchun `Content-Type` headerini tahrirlash va so‘
 
 ---
 
-### Eslatma
+### Intruder yordamida yashirin endpointlarni topish
+
+Dastlabki API endpointlarni aniqlaganingizdan so‘ng, **Intruder** yordamida yashirin endpointlarni ham topishingiz mumkin.
+
+Masalan, foydalanuvchi ma’lumotlarini yangilash uchun quyidagi endpointni aniqlaganingizni tasavvur qiling:
+
+```
+PUT /api/user/update
+```
+
+Yashirin endpointlarni topish uchun Burp Intruder’dan foydalanib, shu tuzilishga ega boshqa resurslarni izlash mumkin. Masalan, `/update` qismiga payload qo‘shib, uni **delete**, **add** kabi keng tarqalgan funksiyalar bilan almashtirib ko‘rishingiz mumkin.
+
+Yashirin endpointlarni qidirishda:
+
+* **API’larda keng qo‘llanadigan nomlash konvensiyalari** va **sanoat atamalari** asosidagi wordlistlardan foydalaning.
+* Shuningdek, dastlabki rekondan olingan **ilovaga xos terminlar**ni ham qo‘shib qo‘yishni unutmang.
+
+
 
 Turli HTTP metodlarni sinab ko‘rayotganda, **past-prioritetli obyektlarni** tanlang. Bu sizning kutilmagan oqibatlardan (masalan, muhim obyektlarni o‘zgartirib yuborish yoki keraksiz yozuvlar yaratish) saqlanishingizga yordam beradi.
