@@ -44,4 +44,12 @@ endpointini topsangiz, quyidagilarni ham tekshirish lozim:
 /api
 ```
 
+Mashina tomonidan o‘qiladigan hujjatlardan foydalanish
+Siz topgan har qanday mashina tomonidan o‘qiladigan API hujjatlarini tahlil qilish uchun turli avtomatlashtirilgan vositalardan foydalanishingiz mumkin.
+
+Siz **Burp Scanner** yordamida OpenAPI hujjatlarini yoki JSON yoki YAML formatidagi boshqa hujjatlarni ko‘rib chiqishingiz va audit qilishingiz mumkin. Shuningdek, OpenAPI hujjatlarini **OpenAPI Parser BApp** orqali ham tahlil qilishingiz mumkin.
+
+Bundan tashqari, hujjatlashtirilgan endpointlarni sinovdan o‘tkazish uchun **Postman** yoki **SoapUI** kabi maxsus vositalardan ham foydalanish imkoniyati mavjud.
+
+
 Bundan tashqari, **Intruder** yordamida keng tarqalgan path’lar ro‘yxatini tekshirib hujjatlarni topish mumkin.
