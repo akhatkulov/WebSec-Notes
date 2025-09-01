@@ -1,0 +1,2 @@
+Ko‘p bosqichli clickjacking
+Hujumchining nishon veb-saytiga kiritiladigan ma’lumotlarni manipulyatsiya qilishi bir nechta harakatlarni talab qilishi mumkin. Masalan, hujumchi foydalanuvchini chakana savdo saytida biror narsa sotib olishga aldayotgan bo‘lsa, avval mahsulotni savatga qo‘shish, keyin esa buyurtmani rasmiylashtirish kerak bo‘ladi. Bunday harakatlarni hujumchi bir nechta **div** yoki **iframe** yordamida amalga oshirishi mumkin. Bunday hujumlarning samarali va yashirin bo‘lishi uchun hujumchidan katta aniqlik va ehtiyotkorlik talab etiladi.
