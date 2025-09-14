@@ -15,3 +15,7 @@
 * [ ] Race conditions
 * [ ] Web LLM attacks
 * [X] Clickjacking (UI redressing)
+
+
+# Cheatsheets
+## SQLi -- [LINK](https://portswigger.net/web-security/sql-injection/cheat-sheet)
