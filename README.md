@@ -18,4 +18,4 @@
 
 
 # Cheatsheets
-## SQLi -- [LINK](https://portswigger.net/web-security/sql-injection/cheat-sheet)
+## SQL injection -- [LINK](https://portswigger.net/web-security/sql-injection/cheat-sheet)
