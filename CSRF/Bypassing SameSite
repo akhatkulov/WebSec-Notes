@@ -1,0 +1,47 @@
+### SameSite Lax cheklovlarini GET so‘rovlari orqali chetlab o‘tish
+
+Amaliyotda serverlar har doim ham ma’lum bir endpointga GET yoki POST so‘rovini qat’iy talab qilavermaydi — hatto forma yuborilishi kutilayotgan hollarda ham. Agar ular sessiya cookie’lari uchun `Lax` cheklovini qo‘llayotgan bo‘lsa (yoki brauzer sukut bo‘yicha ushbu xatti-harakatni qo‘llayotgan bo‘lsa), siz hali ham qurbonning brauzeridan GET so‘rovini chaqirish orqali CSRF hujumini amalga oshirishingiz mumkin.
+
+Shart shuki, so‘rov **top-level navigatsiya** natijasida bo‘lishi kerak — shunda brauzer qurbonning sessiya cookie’sini yuboradi. Quyida bunday hujumni boshlashning eng oddiy yondashuvlaridan biri keltirilgan:
+
+```html
+<script>
+    document.location = 'https://vulnerable-website.com/account/transfer-payment?recipient=hacker&amount=1000000';
+</script>
+```
+
+Oddiy GET so‘rovi ruxsat etilmasa ham, ba’zi veb-ramkalar (framework) so‘rov qatordagi metodni (request line) bekor qilib, boshqa usul bilan almashtirish imkoniyatini beradi. Masalan, Symfony formalarga `_method` parametrini qo‘llab-quvvatlaydi — bu routing (yo‘naltirish) uchun odatdagi metoddan ustun bo‘ladi:
+
+```html
+<form action="https://vulnerable-website.com/account/transfer-payment" method="POST">
+    <input type="hidden" name="_method" value="GET">
+    <input type="hidden" name="recipient" value="hacker">
+    <input type="hidden" name="amount" value="1000000">
+</form>
+```
+
+Boshqa framework’lar ham shunga o‘xshash turli parametrlarni qo‘llab-quvvatlashi mumkin.
+
+---
+
+### Sayt ichidagi “gadget”lardan (on-site gadgets) foydalangan holda SameSite cheklovlarini chetlab o‘tish
+
+Agar cookie `SameSite=Strict` bilan belgilangan bo‘lsa, brauzerlar uni hech qanday cross-site so‘rovga qo‘shmaydi. Biroq, agar siz sayt ichida (same-site) ikkinchi darajali so‘rovni yuzaga keltiradigan **gadget** topa olsangiz, bu cheklovlarni aylanib o‘tish imkoniyati bo‘lishi mumkin.
+
+Bunday gadgetlardan biri — foydalanuvchi tomonidan taʼsirlangan (masalan, URL parametrlariga bog‘liq) maʼlumot asosida dinamik tarzda qayerga yo‘naltirish (redirect) qilishni tashkil etuvchi mijoz tomoni (client-side) yo‘naltirishdir. Bunday misollar uchun DOM-based ochiq yo‘naltirish (open redirection) materiallariga murojaat qilishingiz mumkin.
+
+Brauzerlar nuqtai nazaridan, bu turdagi mijoz tomoni yo‘naltirishlar aslida klassik “redirect” emas: natijaviy so‘rov oddiy, mustaqil so‘rov sifatida ko‘riladi. Eng muhimi — bu so‘rov **same-site** hisoblanadi va shu tufayli sayt bilan bog‘liq barcha cookie’lar, ularning qaysi SameSite chekloviga ega ekanidan qatʼiy nazar, ushbu so‘rovga qo‘shiladi.
+
+Agar siz ushbu gadgetni boshqarib, zararli ikkinchi so‘rovni chaqira olsangiz, bu SameSite cookie cheklovlarini to‘liq chetlab o‘tishga olib kelishi mumkin.
+
+E’tibor bering: shu kabi hujum **server-side** yo‘naltirishlar bilan amalga oshmaydi. Server tomonidan yuborilgan redirect holatida, brauzerlar hamon so‘rovni boshlang‘ich cross-site so‘rovidan kelib chiqqan deb hisoblab, tegishli cookie cheklovlarini qo‘llashda davom etadi.
+
+---
+
+### Zaif “sibling” domenlar orqali SameSite cheklovlarini chetlab o‘tish
+
+Boshqalarining veb-saytini test qilayotgan bo‘lsangiz yoki o‘zingizning saytlaringizni himoyalamoqchi bo‘lsangiz, so‘rovlar cross-origin tarzda yuborilgan bo‘lsa ham **same-site** hisoblanishi mumkinligini yodda tutishingiz juda muhim.
+
+Hujum sirtini (attack surface) — ayniqsa barcha **sibling** (birgalikda yuqori darajadagi domenni bo‘lishuvchi) domenlarni — puxta audit qiling. Xususan, XSS kabi zaifliklar sizga istalgan ikkinchi darajali so‘rovni (arbitrary secondary request) chaqirish imkonini bersa, bu sayt asosidagi himoyalarni to‘liq zaiflashtirishi va saytga tegishli barcha domenlarni cross-site hujumlarga ochib qo‘yishi mumkin.
+
+Klassik CSRFni esdan chiqarmang, shuningdek, agar maqsadli sayt **WebSocket**larni qo‘llab-quvvatlasa, bu funksiya cross-site WebSocket hijacking (CSWSH) ga moyil bo‘lishi mumkin — bu asosan WebSocket handshake’iga yo‘naltirilgan CSRF hujumidir. Batafsil ma’lumot uchun WebSocket zaifliklari bo‘limiga murojaat qiling.
