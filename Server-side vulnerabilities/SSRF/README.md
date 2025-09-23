@@ -53,3 +53,23 @@ Content-Length: 118
 stockApi=http://192.168.0.68/admin
 ```
 
+Yopiq (blind) SSRF zaifliklari
+Yopiq SSRF zaifliklari shunday holatlarda yuzaga keladi: siz ilovani foydalanuvchi tomonidan taqdim etilgan URL ga orqa-tomon (back-end) HTTP so‘rovi yuborishga majbur qilasiz, lekin orqa-tomon so‘rovining javobi ilovaning old-ta’rif (front-end) javobida qaytarilmaydi.
+
+Yopiq SSRF’ni ekspluatatsiya qilish qiyinroq, ammo ba’zi hollarda u server yoki boshqa orqa-tomon komponentlarda to‘liq masofadan kodni bajarish (RCE)ga olib kelishi mumkin.
+
+Yopiq SSRF zaifliklarining ta’siri nima?
+Yopiq SSRF’ning ta’siri odatda to‘liq ma’lumotli (informed) SSRF zaifliklarga qaraganda pastroq bo‘ladi, chunki ularning ikkiyoqlilik emas—faqat bir tomonlama munosabatlari bor. Ular orqa-tomon tizimlardan sezgir ma’lumotlarni osonlikcha olish imkonini bermaydi, biroq ba’zi vaziyatlarda to‘liq masofadan kodni bajarishga olib kelishi mumkin.
+
+Yopiq SSRF’ni qanday topish va ekspluatatsiya qilish mumkin
+Yopiq SSRF’ni aniqlashning eng ishonchli usuli — bu out-of-band (OAST) texnikalaridan foydalanish. Bu siz boshqaradigan tashqi tizimga HTTP so‘rovini yuborishni qo‘zg‘atishga urinish va o‘sha tizim bilan tarmoq o‘zaro ta’sirlarini kuzatishni o‘z ichiga oladi.
+
+Out-of-band tekshirishlarni amalga oshirishning eng oson va samarali yo‘li — Burp Collaborator’dan foydalanish. Burp Collaborator yordamida noyob domen nomlari yaratib, ularni ilovaga yuboriladigan payload’larda ishlatishingiz va ushbu domenlarga bo‘lgan har qanday o‘zaro ta’sirni kuzatishingiz mumkin. Agar ilovadan kelayotgan HTTP so‘rovi qayd etilsa, demak ilova SSRF’ga sezgir.
+
+Eslatma
+SSRF’ni tekshashda ko‘pincha ta’riflangan Collaborator domeni uchun faqat DNS so‘rovi (lookup) kuzatiladi, lekin keyingi HTTP so‘rovi bo‘lmaydi. Bu odatda ilova berilgan domenga HTTP so‘rov yuborishga urinib ko‘rgan, natijada dastlabki DNS lookup yuz bergan, ammo tarmoq darajasidagi filtratsiya haqiqiy HTTP so‘rovni bloklagan holatlarda sodir bo‘ladi. Ko‘p infratuzilma tashqi DNS trafikni ruxsat beradi (chunki bu ko‘p maqsadlar uchun kerak), lekin kutilmagan manzillarga HTTP ulanishlarni bloklashi nisbatan keng tarqalgan.
+
+Faqatgina out-of-band HTTP so‘rovlarni qo‘zg‘ata oladigan yopiq SSRF’ni aniqlash o‘z-o‘zi bilan ekspluatatsiyalanish yo‘lini bermaydi. Chunki siz orqa-tomon so‘rovining javobini ko‘ra olmaysiz, shuning uchun ilova serveri yetib boradigan tizimlardagi kontentni o‘rganish uchun ushbu xulq-atvorni ishlatib bo‘lmaydi. Biroq, u hali ham server yoki boshqa orqa-tomon tizimlarda boshqa zaifliklarni tekshirish uchun foydalanilishi mumkin. Siz ichki IP manzillar zonasini “ko‘r-ko‘rona” skanerlash orqali yaxshi ma’lum zaifliklarni aniqlashga mo‘ljallangan payload’larni yuborishingiz mumkin. Agar bu payload’lar ham yopiq out-of-band texnikalarni ishlatsa, siz yangilanmagan ichki serverda jiddiy zaiflikni aniqlashingiz mumkin.
+
+Yopiq SSRF’ni ekspluatatsiyalashning yana bir yo‘li — ilovani hujumchining nazoratidagi tizimga ulanishga majbur qilish va HTTP mijoziga (client) zararli javoblar qaytarish orqali. Agar siz serverning HTTP implementatsiyasidagi jiddiy mijoz tomonidagi (client-side) zaiflikni ekspluatatsiya qila olsangiz, ilova infratuzilmasida masofadan kodni bajarishni amalga oshirishingiz mumkin.
+
