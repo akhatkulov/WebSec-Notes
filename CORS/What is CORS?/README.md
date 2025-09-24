@@ -1,2 +1,5 @@
 CORS (cross-origin resource sharing) nima?
 Cross-origin resource sharing (CORS) — bu brauzer mexanizmi bo‘lib, u berilgan domen tashqarisida joylashgan resurslarga boshqariladigan tarzda murojaat qilish imkonini beradi. U **bir xil manba siyosati**ni (SOP — same-origin policy) kengaytiradi va unga moslashuvchanlik qo‘shadi. Biroq, agar biror veb-saytning CORS siyosati noto‘g‘ri sozlangan yoki noto‘g‘ri joriy qilingan bo‘lsa, bu **xoch-domen hujumlari** uchun imkoniyat yaratishi mumkin. CORS **CSRF (cross-site request forgery)** kabi xoch-manbali hujumlardan himoya mexanizmi emas.
+
+**Bir xil manba siyosati (Same-origin policy)**
+Bir xil manba siyosati — bu cheklovchi xoch-manbali (cross-origin) spetsifikatsiya bo‘lib, u veb-saytning manba domenidan tashqaridagi resurslar bilan o‘zaro ishlash imkoniyatini cheklaydi. Ushbu siyosat ko‘p yillar oldin zararli bo‘lishi mumkin bo‘lgan xoch-domen o‘zaro ta’sirlarga, masalan, biror veb-saytning boshqasidan shaxsiy ma’lumotlarni o‘g‘irlashiga javoban belgilangan. Odatda, u bir domenning boshqa domenlarga so‘rov yuborishiga ruxsat beradi, lekin javoblarni olish imkoniyatini bermaydi.
