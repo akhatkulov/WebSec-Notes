@@ -124,3 +124,90 @@ let searchTerm = "  example ";
 searchTerm.removeWhitespace();   // "example"
 ```
 
+
+### Prototype pollution zaifligi qanday yuzaga keladi?
+
+**Prototype pollution** zaifliklari odatda shu holatda paydo bo‘ladi: JavaScript funksiyasi foydalanuvchi boshqaruvida bo‘lgan xususiyatlarni o‘z ichiga olgan obyektni rekursiv tarzda mavjud obyektga birlashtiradi (merge qiladi), lekin avval kalitlarni (keys) tozalamaydi (sanitize). Bu xakerga `__proto__` kabi maxsus kalitni va unga tegishli ixtiyoriy ichki (nested) xususiyatlarni yuborish imkonini beradi.
+
+`__proto__` JavaScript kontekstida maxsus ma’no kasb etgani sababli, merge operatsiyasi qiymatlarni maqsadli (target) obyektga emas, balki uning prototipiga tayinlashi mumkin. Natijada hujumchi prototipni zararli qiymatlar bilan “ifloslashi” va keyinchalik ilova tomonidan xavfli tarzda ishlatilishi mumkin bo‘lgan xususiyatlarni kiritishi mumkin.
+
+Har qanday prototip ifloslanishi mumkin bo‘lsa-da, bu odatda global `Object.prototype` bilan sodir bo‘ladi.
+
+Muvaffaqiyatli ekspluatatsiya uchun kerakli asosiy komponentlar:
+
+* **Prototype pollution source (manba)** — bu prototip obyektlarini ixtiyoriy xususiyatlar bilan ifloslash imkonini beruvchi har qanday foydalanuvchi-kiritilgan input.
+* **Sink** — ya’ni arbitrary code execution (ixtiyoriy kod bajarilishiga) olib keladigan JavaScript funksiyasi yoki DOM elementi.
+* **Exploitable gadget** — bu sinkga filtrlanmagan yoki sanitatsiyalanmagan tarzda uzatiladigan va ekspluatatsiya qilish mumkin bo‘lgan xususiyat.
+
+---
+
+### Prototype pollution manbalari
+
+Prototype pollution manbai — bu foydalanuvchi tomonidan boshqariladigan, prototip obyektlariga ixtiyoriy xususiyatlar qo‘shishga imkon beruvchi har qanday input. Eng keng tarqalgan manbalar:
+
+* URL (query yoki fragment/hash qismi orqali)
+* JSON asosidagi input
+* Web messages (postMessage va h.k.)
+
+---
+
+### URL orqali prototype pollution
+
+Quyidagi URLni ko‘rib chiqing — u hujumchi tomonidan qurilgan query stringni o‘z ichiga oladi:
+
+```
+https://vulnerable-website.com/?__proto__[evilProperty]=payload
+```
+
+Agar query stringni kalit\:qiymat juftliklariga ajratsangiz, URL parser `__proto__` ni oddiy satr (string) deb talqin qilishi mumkin. Ammo keyinchalik bu kalitlar va qiymatlar mavjud obyektga merge qilinganda nima sodir bo‘lishiga e’tibor bering.
+
+Siz `__proto__` va uning ichidagi `evilProperty` ni quyidagi kabi maqsadli obyektga oddiygina qo‘shildi, deb o‘ylashingiz mumkin:
+
+```javascript
+{
+    existingProperty1: 'foo',
+    existingProperty2: 'bar',
+    __proto__: {
+        evilProperty: 'payload'
+    }
+}
+```
+
+Ammo haqiqiy holatda bunday bo‘lmaydi. Rekursiv merge operatsiyasi bir nuqtada `evilProperty` qiymatini quyidagi kabi tayinlashi mumkin:
+
+```javascript
+targetObject.__proto__.evilProperty = 'payload';
+```
+
+Bu tayinlash jarayonida JavaScript dvigateli `__proto__` ni prototipga qaytaruvchi getter sifatida ko‘radi. Natijada `evilProperty` qiymati maqsadli obyektga emas, uning prototipiga tayinlanadi. Agar maqsadli obyekt default `Object.prototype` dan foydalansa, endi JavaScript runtime’dagi barcha obyektlar (o‘zlarida shu nomdagi xususiyat bo‘lmasa) `evilProperty` ni meros qilib olishadi.
+
+Amaliyotda `evilProperty` nomli xususiyatni qo‘shish ko‘pincha hech qanday ta’sir qilmaydi. Biroq hujumchi shu usul bilan ilova yoki import qilingan kutubxonalar tomonidan ishlatiladigan xususiyatlarni prototipga kiritishi mumkin.
+
+---
+
+### JSON input orqali prototype pollution
+
+Foydalanuvchi boshqaruvidagi obyektlar ko‘pincha `JSON.parse()` bilan JSON satridan olingan obyektlardan olinadi. Qiziq tomoni shuki, `JSON.parse()` ham JSON obyektdagi har qanday kalitni oddiy satr sifatida qabul qiladi, shu jumladan `__proto__` ni ham. Bu yana bir potentsial vektor hisoblanadi.
+
+Masalan, hujumchi quyidagi zararli JSONni yuborsa (masalan, web message orqali):
+
+```json
+{
+    "__proto__": {
+        "evilProperty": "payload"
+    }
+}
+```
+
+Agar bu `JSON.parse()` orqali JavaScript obyektiga aylanadigan bo‘lsa, hosil bo‘lgan obyekt haqiqatan ham `__proto__` kalitiga ega bo‘ladi:
+
+```javascript
+const objectLiteral = {__proto__: {evilProperty: 'payload'}};
+const objectFromJson = JSON.parse('{"__proto__": {"evilProperty": "payload"}}');
+
+objectLiteral.hasOwnProperty('__proto__');     // false
+objectFromJson.hasOwnProperty('__proto__');    // true
+```
+
+Agar `JSON.parse()` yordamida yaratilgan obyekt keyinchalik avvalgi misoldagi kabi sanitatsiya qilinmagan holda mavjud obyektga merge qilinsa, bu ham prototype pollution ga olib keladi, URL misolida ko‘rib chiqilganidek.
+
