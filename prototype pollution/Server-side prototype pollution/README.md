@@ -256,4 +256,28 @@ function _addHeaderLine(field, value, dest) {
 Agar shunday bo‘lsa, qayta ishlanayotgan header amalda tashlab yuboriladi. Bu qanday amalga oshirilishiga qarab, ushbu tekshiruv (ehtimol tasodifan) prototip zanjiri orqali meros bo‘lib kelgan xususiyatlarni ham o‘z ichiga oladi. Demak, agar biz prototipni o‘zimizning `content-type` xususiyatimiz bilan ifloslasak, so‘rovdagi haqiqiy `Content-Type` headerini ifodalovchi xususiyat shu nuqtada yo‘q qilinadi va u bilan birga headerdan olingan asl qiymat ham yo‘q bo‘ladi.
 
 
+Server-tomonidagi prototype pollution manbalarini skanerlash
+Qo'lda manbalarni sinovdan o'tkazish zaiflikni tushunishga yordam berar ekan, amalda bu takrorlanuvchi va vaqt talab qiluvchi bo'lishi mumkin. Shu sababli, biz Burp Suite uchun Server-Side Prototype Pollution Scanner kengaytmasini yaratdik — u bu jarayonni avtomatlashtirish imkonini beradi. Asosiy ish jarayoni quyidagicha:
+
+1. BApp Store’dan Server-Side Prototype Pollution Scanner kengaytmasini o‘rnating va u yoqilganligiga ishonch hosil qiling. Qanday o‘rnatish haqida batafsil ma’lumot uchun “Installing extensions from the BApp Store” bo‘limiga qarang.
+2. Burp’ning brauzeridan foydalanib, maqsadli veb-saytni o‘rganing — iloji boricha ko‘proq kontentni xaritalang va proxy tarixida trafikni to‘plang.
+3. Burp’da Proxy > HTTP history tabiga o‘ting.
+4. Ro‘yxatni faqat doirada (in-scope) elementlarni ko‘rsatish uchun filtrlash.
+5. Ro‘yxatdagi barcha elementlarni tanlang.
+6. Tanlov ustida sichqonchaning o‘ng tugmasini bosib, Extensions > Server-Side Prototype Pollution Scanner > Server-Side Prototype Pollution menyusiga o‘ting, so‘ng scanning texnikasidan birini tanlang.
+7. So‘ralganda, zarur bo‘lsa hujum (attack) konfiguratsiyasini o‘zgartiring, so‘ng Scan boshlash uchun OK tugmasini bosing.
+
+Burp Suite Professional’da kengaytma topilgan prototype pollution manbalarini Dashboard va Target tablaridagi Issue activity panelida xabar qiladi. Agar siz Burp Suite Community Edition’dan foydalansangiz, Extensions > Installed tabiga o‘tib, kengaytmanni tanlang va uning Output tabini kuzatib boring — topilgan muammolar shu yerda ko‘rsatiladi.
+
+Eslatma
+Qaysi scan texnikasini tanlashni bilmasangiz, mavjud barcha usullar bilan scan o‘tkazadigan Full scan’ni tanlashingiz mumkin. Biroq, bu ancha ko‘p so‘rov yuborishni talab qiladi.
+
+Server-tomonidagi prototype pollution uchun kirish (input) filtrini chetlab o‘tish
+Veb-saytlar ko‘pincha **proto** kabi shubhali kalit so‘zlarni filtrlash orqali prototype pollution’ni oldini olishga harakat qilishadi. Ammo bunday kalitlarni sanitizatsiya qilish uzoq muddatli mustahkam yechim emas — chunki uni bir qancha usullar bilan chetlab o‘tish mumkin. Masalan, hujumchi:
+
+* Ta’qiqlangan kalitlarni obfuskatsiya qilib, sanitizatsiya qilinib qolishini oldini olishi mumkin. Batafsil ma’lumot uchun “Bypassing flawed key sanitization” bo‘limiga qarang.
+* **proto** o‘rniga constructor xususiyati orqali prototype’ga murojaat qilishi mumkin. Batafsil ma’lumot uchun “Prototype pollution via the constructor” bo‘limiga qarang.
+
+Shuningdek, Node ilovalari buyruq qatori flag’lari yordamida **proto** ni o‘chirishi yoki yoniq bo‘lishini oldini olishi mumkin: --disable-proto=delete yoki --disable-proto=throw. Biroq, bu ham constructor texnikasi orqali chetlab o‘tilishi mumkin.
+
 
