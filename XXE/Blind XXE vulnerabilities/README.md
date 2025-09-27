@@ -93,3 +93,32 @@ Ushbu XXE payload `xxe` nomli XML parametr entitetini e’lon qiladi va DTD ichi
 Eslatma
 Ba’zi hollarda bu usul har doim ishlamasligi mumkin — masalan `/etc/passwd` faylidagi newline (qator yakunlash) belgilarini o‘z ichiga olgan ba’zi fayl mazmunlarini uzatib bo‘lmasligi mumkin. Buning sababi ba’zi XML parserlar tashqi entitetdagi URLni chaqirish uchun ishlatadigan API URLda qaysi belgilar ruxsat etilganini tekshiradi. Bunday holatda HTTP o‘rniga FTP protokolidan foydalanish mumkin bo‘ladi. Ba’zan esa newline belgilarini o‘z ichiga olgan ma’lumotni umuman eksfiltraytsiya qilib bo‘lmaydi; shuning uchun `/etc/hostname` kabi qator bo‘lmagan fayl maqsad qilib olinishi mumkin.
 
+
+Ko‘zdan yashiringan (blind) XXE orqali xatolik xabarlari orqali ma’lumotlarni olish
+Ko‘zdan yashiringan XXE ni ekspluatatsiya qilishning muqobil usuli — XML tahlilida (parsing) xato yuzaga keltirib, xato xabarida siz olib kelmoqchi bo‘lgan maxfiy ma’lumot saqlanib qolishini ta’minlashdir. Bu usul ilova xato xabarini javobda qaytarib berganda samarali bo‘ladi.
+
+Quyidagi zararli tashqi DTD yordamida `/etc/passwd` faylining mazmunini o‘z ichiga olgan XML parsing xatosini qo‘zg‘atish mumkin:
+
+```xml
+<!ENTITY % file SYSTEM "file:///etc/passwd">
+<!ENTITY % eval "<!ENTITY &#x25; error SYSTEM 'file:///nonexistent/%file;'>">
+%eval;
+%error;
+```
+
+Ushbu DTD quyidagi qadamlarni bajaradi:
+
+1. `file` nomli XML parametr entitetini e’lon qiladi; uning qiymati `/etc/passwd` faylining mazmuni bo‘ladi.
+2. `eval` nomli XML parametr entitetini e’lon qiladi; uning qiymati `error` deb nomlangan boshqa bir XML parametr entitetining dinamik e’lonidan iborat. `error` entiteti esa mavjud bo‘lmagan faylni yuklashga urinish orqali baholanadi — bu fayl nomi `file` entiteti qiymatini o‘z ichiga oladi.
+3. `eval` entiteti ishlatiladi — bu `error` entitetining dinamik e’lon qilinishiga olib keladi.
+4. `error` entiteti ishlatiladi — natijada mavjud bo‘lmagan faylni yuklashga urinish yuz beradi va xato xabarida mavjud bo‘lmagan fayl nomi (ya’ni `/etc/passwd` mazmuni) paydo bo‘ladi.
+
+Zararli tashqi DTD chaqirilganda quyidagiga o‘xshash xato xabar hosil bo‘lishi mumkin:
+
+```
+java.io.FileNotFoundException: /nonexistent/root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+...
+```
+
