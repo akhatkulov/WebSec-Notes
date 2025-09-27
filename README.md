@@ -1,5 +1,5 @@
 * [X] Cross-origin resource sharing (CORS)
-* [ ] Authentication vulnerabilities
+* [X] Authentication vulnerabilities
 * [X] Cross-site request forgery (CSRF)
 * [X] WebSockets vulnerabilities
 * [X] API testing
@@ -9,7 +9,7 @@
 * [X] Path traversal
 * [X] File upload vulnerabilities
 * [ ] Web cache deception
-* [ ] Prototype pollution
+* [X] Prototype pollution
 * [X] Server-side request forgery (SSRF) attacks
 * [X] Server-side vulnerabilities
 * [ ] Race conditions
