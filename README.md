@@ -13,7 +13,7 @@
 * [X] Server-side request forgery (SSRF) attacks
 * [X] Server-side vulnerabilities
 * [ ] Race conditions
-* [ ] Web LLM attacks
+* [X] Web LLM attacks
 * [X] Clickjacking (UI redressing)
 
 
