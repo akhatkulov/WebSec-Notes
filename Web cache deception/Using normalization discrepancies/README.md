@@ -54,3 +54,32 @@ Masalan, `/assets/..%2fprofile` paylo‘di:
 * Origin server bu yo‘lni `/profile` deb talqin qiladi.
 * Origin server dinamik profil maʼlumotini qaytaradi va bu javob keshga saqlanishi mumkin.
 
+
+
+# Kesh serverining normalizatsiyasidan foydalanish
+
+Agar kesh server kodlangan nuqta-segmentlarni yechib tashlasa, lekin origin server buni qilmasa, nomuvofiqlikdan foydalanish uchun quyidagi tuzilishga mos paylo‘d (payload) yaratishingiz mumkin:
+
+`/<dynamic-path>%2f%2e%2e%2f<static-directory-prefix>`
+
+**Eslatma**
+Kesh serverining normalizatsiyasidan ekspluatatsiya qilishda yo‘lni travers qilish ketma-ketligidagi barcha belgilarni kodlash kerak. Kodlangan belgilarni ishlatish delimitrlarda kutilmagan xatti-harakatlarning oldini olishga yordam beradi, va kesh dekodlashni amalga oshiradiganligi sababli static katalog prefiksidan keyin ochiq (`unencoded`) slash bo‘lishi shart emas.
+
+Bu holatda faqat path traversal (yo‘lni travers qilish) yetarli bo‘lmaydi. Masalan, `/profile%2f%2e%2e%2fstatic` paylo‘di qanday talqin qilinishiga eʼtibor bering:
+
+* Kesh bu yo‘lni talqin qiladi: `/static`
+* Origin server bu yo‘lni talqin qiladi: `/profile%2f%2e%2e%2fstatic`
+
+Origin server ehtimol profil maʼlumotini qaytarmasdan, xatolik (error) javobini beradi.
+
+Nomuvofiqlikdan foydalanish uchun siz, shuningdek, origin server tomonidan ishlatiladigan, ammo kesh tomonidan ishlatilmaydigan bir ajratgichni (delimiter) aniqlashingiz kerak bo‘ladi. Mumkin bo‘lgan delimiterlarni sinash uchun ularni dynamic path (dinamik yo‘l)dan keyin paylo‘dga qo‘shing:
+
+* Agar origin server delimiterni ishlatsa, u URL yo‘lini truncatsiya (kesadi) qiladi va dinamik maʼlumotni qaytaradi.
+* Agar kesh delimiterni ishlatmasa, u yo‘lni yechiradi va javobni keshga saqlaydi.
+
+Masalan, `/profile;%2f%2e%2e%2fstatic` paylo‘dini ko‘rib chiqing — origin server `;` ni delimiter sifatida ishlatsa:
+
+* Kesh bu yo‘lni talqin qiladi: `/static`
+* Origin server bu yo‘lni talqin qiladi: `/profile`
+
+Origin server dinamik profil maʼlumotini qaytaradi va bu javob keshga saqlanishi mumkin. Shu sababli ushbu paylo‘d ekspluatatsiya uchun ishlatilishi mumkin.
